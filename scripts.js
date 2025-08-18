@@ -334,72 +334,6 @@ contactForm.addEventListener('submit', (e) => {
     contactForm.reset();
 });
 
-// Chatbot Functions
-chatbotToggle.addEventListener('click', () => {
-    chatbotContainer.classList.toggle('active');
-});
-
-closeChatbot.addEventListener('click', () => {
-    chatbotContainer.classList.remove('active');
-});
-
-function addBotMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('chatbot-message', 'bot');
-    messageDiv.innerHTML = `<p>${message}</p>`;
-    chatbotMessages.appendChild(messageDiv);
-    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-}
-
-function addUserMessage(message) {
-    const messageDiv = document.createElement('div');
-    messageDiv.classList.add('chatbot-message', 'user');
-    messageDiv.innerHTML = `<p>${message}</p>`;
-    chatbotMessages.appendChild(messageDiv);
-    chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-}
-
-// Simple Chatbot Responses
-const botResponses = {
-    'hello': 'Hello there! How can I help you with solar energy today?',
-    'hi': 'Hi! What solar questions do you have for me?',
-    'price': 'Our solar packages start at $4,999 after incentives. Would you like me to show you our packages?',
-    'packages': 'We offer three main packages: Starter Home ($4,999), Family Home ($8,999), and Premium Home ($12,999). Which one are you interested in?',
-    'contact': 'You can reach us at +1 (555) 123-4567 or info@alpha-electricals.com. Would you like me to open the contact form?',
-    'default': "I'm sorry, I didn't understand that. Could you ask about our solar packages, prices, or contact information?"
-};
-
-sendMessage.addEventListener('click', () => {
-    const message = chatbotInput.value.trim();
-    if (message) {
-        addUserMessage(message);
-        chatbotInput.value = '';
-        
-        // Simple response logic
-        setTimeout(() => {
-            const lowerMessage = message.toLowerCase();
-            let response = botResponses.default;
-            
-            if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
-                response = botResponses.hello;
-            } else if (lowerMessage.includes('price') || lowerMessage.includes('cost')) {
-                response = botResponses.price;
-            } else if (lowerMessage.includes('package') || lowerMessage.includes('system')) {
-                response = botResponses.packages;
-            } else if (lowerMessage.includes('contact') || lowerMessage.includes('call')) {
-                response = botResponses.contact;
-            }
-            
-            addBotMessage(response);
-        }, 500);
-    }
-});
-
-chatbotInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        sendMessage.click();
-    }
-});
 
 // Initialize Google Map
 function initMap() {
@@ -525,11 +459,6 @@ window.addEventListener('click', (e) => {
 
 
 
-
-
-
-
-
 // Smooth Scrolling for Anchor Links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
@@ -623,3 +552,448 @@ auth.onAuthStateChanged(user => {
         loginBtn.textContent = 'Login';
     }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Chatbot Application
+document.addEventListener('DOMContentLoaded', function() {
+    // Debug mode configuration
+    const CHATBOT_DEBUG = true;
+    const debugLog = CHATBOT_DEBUG ? console.log.bind(console, '[Chatbot]') : function() {};
+
+    // DOM Elements
+    const elements = {
+        chatbotToggle: document.querySelector('.chatbot-toggle'),
+        chatbotContainer: document.querySelector('.chatbot-container'),
+        closeChatbot: document.querySelector('.close-chatbot'),
+        chatbotMessages: document.getElementById('chatbotMessages'),
+        chatbotInput: document.getElementById('chatbotInput'),
+        sendMessage: document.getElementById('sendMessage'),
+        attachFile: document.getElementById('attachFile'),
+        notificationBadge: document.querySelector('.notification-badge')
+    };
+
+    // Verify all required elements exist
+    if (!validateElements()) {
+        console.error('Chatbot initialization failed: Required elements missing');
+        return;
+    }
+
+    // State management
+    const state = {
+        isTyping: false,
+        conversationHistory: [],
+        firstVisit: !localStorage.getItem('chatbotVisited')
+    };
+
+    // Initialize the chatbot
+    initChatbot();
+
+    // Core Functions
+    function validateElements() {
+        let allValid = true;
+        Object.entries(elements).forEach(([name, element]) => {
+            if (!element && name !== 'notificationBadge') {
+                console.error(`Element ${name} not found`);
+                allValid = false;
+            }
+        });
+        return allValid;
+    }
+
+    function initChatbot() {
+        debugLog('Initializing chatbot...');
+        
+        // Set up event listeners
+        setupEventListeners();
+        
+        // Show welcome notification if first visit
+        if (state.firstVisit) {
+            setTimeout(showWelcomeNotification, 3000);
+            localStorage.setItem('chatbotVisited', 'true');
+        }
+        
+        // Initial welcome message
+        addBotMessage(botResponses.hello.message, botResponses.hello.quickReplies);
+    }
+
+    function setupEventListeners() {
+        // Toggle chatbot visibility
+        elements.chatbotToggle.addEventListener('click', toggleChatbot);
+        
+        // Close chatbot
+        elements.closeChatbot.addEventListener('click', () => {
+            elements.chatbotContainer.classList.remove('active');
+        });
+        
+        // Send message on button click
+        elements.sendMessage.addEventListener('click', handleSendMessage);
+        
+        // Send message on Enter key
+        elements.chatbotInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                handleSendMessage();
+            }
+        });
+        
+        // File attachment (placeholder functionality)
+        if (elements.attachFile) {
+            elements.attachFile.addEventListener('click', () => {
+                addBotMessage("File upload functionality would be implemented here in a production environment.");
+            });
+        }
+        
+        // Quick replies (event delegation)
+        document.addEventListener('click', handleQuickReply);
+    }
+
+    function toggleChatbot() {
+        elements.chatbotContainer.classList.toggle('active');
+        if (elements.notificationBadge) {
+            elements.notificationBadge.style.display = 'none';
+        }
+        
+        if (elements.chatbotContainer.classList.contains('active')) {
+            elements.chatbotInput.focus();
+        }
+    }
+
+    function showWelcomeNotification() {
+        if (elements.notificationBadge) {
+            elements.notificationBadge.style.display = 'flex';
+            debugLog('Showing welcome notification');
+        }
+    }
+
+    // Message Handling
+    function handleSendMessage() {
+        const message = elements.chatbotInput.value.trim();
+        if (!message) return;
+        
+        debugLog('User sending message:', message);
+        addUserMessage(message);
+        elements.chatbotInput.value = '';
+        
+        // Process the message after a short delay
+        setTimeout(() => {
+            processMessage(message);
+        }, 300);
+    }
+
+    function handleQuickReply(e) {
+        if (e.target.classList.contains('quick-reply')) {
+            const button = e.target;
+            const replyText = button.textContent;
+            const replyValue = button.dataset.reply;
+            
+            debugLog('Quick reply selected:', replyText);
+            addUserMessage(replyText);
+            
+            setTimeout(() => {
+                processMessage(replyValue);
+            }, 500);
+        }
+    }
+
+    // Message Display Functions
+    function addUserMessage(message) {
+        try {
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const messageDiv = createMessageElement('user', message, timestamp);
+            elements.chatbotMessages.appendChild(messageDiv);
+            scrollToBottom();
+            
+            // Add to conversation history
+            state.conversationHistory.push({
+                type: 'user',
+                message: message,
+                timestamp: new Date()
+            });
+        } catch (error) {
+            console.error('Error adding user message:', error);
+        }
+    }
+
+    function addBotMessage(message, quickReplies = []) {
+        try {
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const messageDiv = createMessageElement('bot', message, timestamp, quickReplies);
+            elements.chatbotMessages.appendChild(messageDiv);
+            scrollToBottom();
+            
+            // Add to conversation history
+            state.conversationHistory.push({
+                type: 'bot',
+                message: message,
+                timestamp: new Date(),
+                quickReplies: quickReplies
+            });
+        } catch (error) {
+            console.error('Error adding bot message:', error);
+        }
+    }
+
+    function createMessageElement(type, content, timestamp, quickReplies = []) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chatbot-message ${type}`;
+        
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message-content';
+        messageContent.innerHTML = `<p>${content}</p>`;
+        
+        // Add quick replies if provided
+        if (quickReplies.length > 0) {
+            const quickRepliesDiv = document.createElement('div');
+            quickRepliesDiv.className = 'quick-replies';
+            
+            quickReplies.forEach(reply => {
+                const button = document.createElement('button');
+                button.className = 'quick-reply';
+                button.textContent = reply.text;
+                button.dataset.reply = reply.value;
+                quickRepliesDiv.appendChild(button);
+            });
+            
+            messageContent.appendChild(quickRepliesDiv);
+        }
+        
+        messageDiv.appendChild(messageContent);
+        
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'message-time';
+        timeDiv.textContent = timestamp;
+        messageDiv.appendChild(timeDiv);
+        
+        return messageDiv;
+    }
+
+    function showTypingIndicator() {
+        if (state.isTyping) return;
+        
+        state.isTyping = true;
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'typing-indicator';
+        typingDiv.innerHTML = `
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        `;
+        elements.chatbotMessages.appendChild(typingDiv);
+        scrollToBottom();
+        
+        return typingDiv;
+    }
+
+    function hideTypingIndicator(typingElement) {
+        if (typingElement && typingElement.parentNode) {
+            typingElement.remove();
+        }
+        state.isTyping = false;
+    }
+
+    function scrollToBottom() {
+        elements.chatbotMessages.scrollTop = elements.chatbotMessages.scrollHeight;
+    }
+
+    // Message Processing
+    function processMessage(message) {
+        debugLog('Processing message:', message);
+        
+        const typingElement = showTypingIndicator();
+        const lowerMessage = message.toLowerCase();
+        
+        setTimeout(() => {
+            try {
+                hideTypingIndicator(typingElement);
+                
+                // Find appropriate response
+                let response = findResponse(lowerMessage);
+                
+                // Add bot response
+                addBotMessage(response.message, response.quickReplies);
+                
+                // Handle special actions
+                handleSpecialActions(lowerMessage, message);
+                
+            } catch (error) {
+                console.error('Error processing message:', error);
+                addBotMessage("I encountered an error processing your request. Please try again.");
+            }
+        }, 1000 + Math.random() * 1000); // Random delay for natural feel
+    }
+
+    function findResponse(message) {
+        // Check for specific keywords
+        if (message.includes('hello') || message.includes('hi')) {
+            return botResponses.hello;
+        }
+        if (message.includes('solar') || message.includes('panel') || message.includes('package')) {
+            return botResponses['solar packages'];
+        }
+        if (message.includes('wire') || message.includes('electr')) {
+            return botResponses['house wiring'];
+        }
+        if (message.includes('cctv') || message.includes('security') || message.includes('camera')) {
+            return botResponses['cctv systems'];
+        }
+        if (message.includes('contact') || message.includes('call') || message.includes('email')) {
+            return botResponses.contact;
+        }
+        if (message.includes('price') || message.includes('cost')) {
+            return {
+                message: "Our prices vary based on your needs:<br><br>" +
+                         "• Solar: Depends on your electricity usage<br>" +
+                         "• Wiring: Based on property size<br>" +
+                         "• CCTV: Number of cameras needed<br><br>" +
+                         "Would you like a free consultation?",
+                quickReplies: [
+                    { text: 'Solar Consultation', value: 'solar consultation' },
+                    { text: 'Wiring Estimate', value: 'wiring estimate' },
+                    { text: 'CCTV Quote', value: 'cctv quote' }
+                ]
+            };
+        }
+        
+        // Default response
+        return botResponses.default;
+    }
+
+    function handleSpecialActions(lowerMessage, originalMessage) {
+        if (lowerMessage.includes('open contact') || originalMessage === 'open contact') {
+            setTimeout(() => {
+                const contactLink = document.querySelector('a[href="#contact"]');
+                if (contactLink) {
+                    contactLink.click();
+                    elements.chatbotContainer.classList.remove('active');
+                } else {
+                    debugLog('Contact link not found');
+                }
+            }, 500);
+        }
+        else if (lowerMessage.includes('whatsapp') || originalMessage === 'whatsapp') {
+            window.open('https://wa.me/+94751168206', '_blank', 'noopener,noreferrer');
+        }
+        else if (lowerMessage.includes('call now') || originalMessage === 'call now') {
+            window.location.href = 'tel:+94723283588';
+        }
+    }
+
+    // Bot Responses
+    const botResponses = {
+        'hello': {
+            message: 'Hello there! ?? How can I assist you with solar energy, electrical wiring, or CCTV systems today?',
+            quickReplies: [
+                { text: 'Solar Packages', value: 'solar packages' },
+                { text: 'House Wiring', value: 'house wiring' },
+                { text: 'CCTV Systems', value: 'cctv systems' }
+            ]
+        },
+        'solar packages': {
+            message: 'We offer several solar packages:<br><br>' +
+                    '• <strong>5KV System</strong> - Rs.850,000<br>' +
+                    '• <strong>10KV System</strong> - Rs.1,500,000<br>' +
+                    '• <strong>20KV System</strong> - Rs.2,250,000<br><br>' +
+                    'Would you like more details about any specific package?',
+            quickReplies: [
+                { text: '5KV Details', value: '5kv details' },
+                { text: '10KV Details', value: '10kv details' },
+                { text: 'Contact Sales', value: 'contact sales' }
+            ]
+        },
+        'house wiring': {
+            message: 'Our professional house wiring services include:<br><br>' +
+                    '• Complete new home wiring<br>' +
+                    '• Electrical repairs and upgrades<br>' +
+                    '• Safety inspections<br>' +
+                    '• Lighting solutions<br><br>' +
+                    'We use high-quality materials meeting all safety standards.',
+            quickReplies: [
+                { text: 'Get a Quote', value: 'wiring quote' },
+                { text: 'View Gallery', value: 'wiring gallery' },
+                { text: 'Safety Tips', value: 'safety tips' }
+            ]
+        },
+        'cctv systems': {
+            message: 'We provide complete CCTV security solutions:<br><br>' +
+                    '?? <strong>Basic Package</strong> (4 cameras) - Rs.75,000<br>' +
+                    '?? <strong>Advanced Package</strong> (8 cameras) - Rs.150,000<br>' +
+                    '?? <strong>Premium Package</strong> (12 cameras) - Rs.250,000<br><br>' +
+                    'All packages include professional installation and support.',
+            quickReplies: [
+                { text: 'Basic Details', value: 'basic cctv' },
+                { text: 'Advanced Details', value: 'advanced cctv' },
+                { text: 'Book Installation', value: 'book cctv' }
+            ]
+        },
+        'contact': {
+            message: 'You can reach us through:<br><br>' +
+                    '?? Phone: +94723283588<br>' +
+                    '?? Email: sujithelectro@gmail.com<br>' +
+                    '?? Location: Kurunegala, Sri Lanka<br><br>' +
+                    'Would you like me to open the contact form for you?',
+            quickReplies: [
+                { text: 'Open Contact Form', value: 'open contact' },
+                { text: 'Call Now', value: 'call now' },
+                { text: 'WhatsApp', value: 'whatsapp' }
+            ]
+        },
+        'default': {
+            message: "I'm sorry, I didn't quite understand that. Could you ask about:<br><br>" +
+                    "• Our solar packages<br>" +
+                    "• House wiring services<br>" +
+                    "• CCTV security systems<br>" +
+                    "• Contact information",
+            quickReplies: [
+                { text: 'Solar Packages', value: 'solar packages' },
+                { text: 'House Wiring', value: 'house wiring' },
+                { text: 'Contact Info', value: 'contact' }
+            ]
+        }
+    };
+
+    // Feature Testing (only in debug mode)
+    if (CHATBOT_DEBUG) {
+        setTimeout(() => {
+            debugLog('Running automated tests...');
+            testFeature('Message Sending', () => {
+                addUserMessage('Test message');
+                processMessage('hello');
+            });
+            
+            testFeature('Quick Replies', () => {
+                const testEvent = {
+                    target: document.querySelector('.quick-reply') || 
+                            { classList: { contains: () => true }, textContent: 'Test', dataset: { reply: 'test' } }
+                };
+                handleQuickReply(testEvent);
+            });
+            
+            testFeature('Special Actions', () => {
+                processMessage('open contact');
+                processMessage('whatsapp');
+                processMessage('call now');
+            });
+        }, 2000);
+    }
+
+    function testFeature(featureName, testFunction) {
+        try {
+            debugLog(`Testing feature: ${featureName}`);
+            testFunction();
+        } catch (error) {
+            debugLog(`Test failed for ${featureName}:`, error);
+        }
+    }
+});
+
