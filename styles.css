@@ -1,14 +1,15 @@
+
 /* Base Styles */
 :root {
-    --primary-color: #0066cc;
+    --primary-color: #a300cc;
     --secondary-color: #ffcc00;
     --dark-blue: #003366;
-    --light-blue: #e6f2ff;
+    --light-blue: #ffffff;
     --text-color: #333;
     --light-text: #777;
     --white: #ffffff;
     --black: #000000;
-    --gray: #f5f5f5;
+    --gray: #ffffff;
     --dark-gray: #e0e0e0;
     --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     --transition: all 0.3s ease;
