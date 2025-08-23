@@ -962,6 +962,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
+
+
     // Feature Testing (only in debug mode)
     if (CHATBOT_DEBUG) {
         setTimeout(() => {
@@ -996,4 +998,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
-
