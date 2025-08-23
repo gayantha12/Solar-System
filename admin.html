@@ -1,0 +1,230 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin | Orders Dashboard — Alpha Electricals</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand-dark:#003366;
+      --brand-accent:#a300cc;
+      --brand-gold:#ffcc00;
+      --card-bg: rgba(255,255,255,0.88);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0}
+    body{
+      font-family:'Poppins',sans-serif;
+      overflow:hidden;
+    }
+
+    /* ===== Solar System Background ===== */
+    canvas#space {
+      position:fixed; inset:0;
+      width:100%; height:100%;
+      background:#000;
+      z-index:0;
+    }
+    .vignette{
+      pointer-events:none;
+      position:fixed; inset:0; z-index:1;
+      background: radial-gradient(ellipse at center,
+        rgba(0,0,0,0) 40%, rgba(0,0,0,0.35) 100%);
+    }
+
+    /* ===== Containers ===== */
+    .center-wrap{
+      position:relative; z-index:2;
+      min-height:100vh;
+      display:flex; align-items:center; justify-content:center;
+      padding:30px;
+    }
+    .panel, .login {
+      width:min(950px, 94vw);
+      background: var(--card-bg);
+      border-radius:20px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.45);
+      padding:24px;
+      animation: rise .7s ease both;
+    }
+    @keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)}}
+    .hidden{display:none}
+
+    /* Logo & branding */
+    .brand{
+      display:flex; align-items:center; justify-content:center;
+      gap:10px; margin-bottom:12px;
+    }
+    .brand img{
+      width:45px; height:45px; object-fit:cover;
+      border-radius:10px;
+      box-shadow:0 5px 15px rgba(0,0,0,0.25);
+    }
+    .brand .title{
+      font-weight:700; font-size:1.5rem; color:var(--brand-dark);
+    }
+
+    .admin-name{
+      text-align:center; font-weight:600; color:var(--brand-accent);
+      margin:6px 0 14px;
+      animation:glow 2s ease-in-out infinite alternate;
+    }
+    @keyframes glow{
+      0%{ text-shadow:0 0 5px var(--brand-accent), 0 0 10px var(--brand-gold); }
+      100%{ text-shadow:0 0 15px var(--brand-gold), 0 0 25px var(--brand-accent); }
+    }
+
+    .dash-title{
+      text-align:center;
+      font-size:1.7rem; font-weight:700; color:var(--brand-dark);
+      margin:12px 0 20px;
+    }
+
+    /* Stats cards */
+    .stats{
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr));
+      gap:14px; margin:15px 0 22px;
+    }
+    .card{
+      border-radius:16px; padding:18px;
+      background: linear-gradient(135deg, var(--brand-gold), var(--brand-accent));
+      color:#fff; box-shadow:0 8px 22px rgba(0,0,0,.25);
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .card h3{margin:0; font-size:1rem; font-weight:600}
+    .card .value{margin-top:6px; font-weight:700; font-size:1.5rem}
+
+    /* Orders iframe */
+    iframe{
+      width:100%; height:480px;
+      border:none; border-radius:14px;
+      background:rgba(255,255,255,0.6);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 6px 20px rgba(0,0,0,.2);
+    }
+
+    /* Back button */
+    .back-btn{
+      position:fixed; top:15px; left:15px; z-index:3;
+      padding:10px 16px; border-radius:10px;
+      background: linear-gradient(135deg, var(--brand-dark), var(--brand-accent));
+      color:#fff; text-decoration:none; font-weight:600;
+      box-shadow:0 6px 18px rgba(0,0,0,.3);
+      transition:transform .25s, box-shadow .25s;
+    }
+    .back-btn:hover{transform:translateY(-3px) scale(1.05); box-shadow:0 10px 25px rgba(0,0,0,.45)}
+
+    /* Login form */
+    .login h2{ text-align:center; margin:10px 0 18px; color:var(--brand-dark); }
+    .field{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+    input[type="password"]{
+      width:min(380px, 90%); padding:11px 13px;
+      border-radius:10px; border:1px solid #ccc;
+      font-size:1rem;
+    }
+    .btn{
+      padding:11px 18px; border-radius:10px; border:none;
+      font-weight:700; color:#fff;
+      background:linear-gradient(135deg,var(--brand-gold),var(--brand-accent));
+      cursor:pointer; box-shadow:0 6px 16px rgba(0,0,0,.25);
+    }
+    .btn:hover{transform:translateY(-2px)}
+  </style>
+</head>
+<body>
+
+  <!-- BACKGROUND -->
+  <canvas id="space"></canvas>
+  <div class="vignette"></div>
+
+  <!-- BACK BUTTON -->
+  <a class="back-btn" href="index.html">⬅ Back to Website</a>
+
+  <div class="center-wrap">
+
+    <!-- LOGIN -->
+    <section class="login" id="loginBox">
+      <div class="brand">
+        <img src="logo.jpg" alt="Logo">
+        <div class="title">Alpha Electricals</div>
+      </div>
+      <h2>🔐 Admin Login</h2>
+      <div class="field">
+        <input type="password" id="adminPass" placeholder="Enter Admin Password">
+        <button class="btn" id="loginBtn">Login</button>
+      </div>
+    </section>
+
+    <!-- ADMIN PANEL -->
+    <section class="panel hidden" id="adminPanel">
+      <div class="brand">
+        <img src="logo.jpg" alt="Logo">
+        <div class="title">Alpha Electricals</div>
+      </div>
+      <div class="admin-name">👨‍💼 Admin: Sujith Shantha Ranasingha</div>
+      <h1 class="dash-title">📊 Orders Dashboard</h1>
+
+      <div class="stats">
+        <div class="card">
+          <h3>👁️ Visitors</h3>
+          <div class="value" id="visitorCount">0</div>
+        </div>
+        <div class="card">
+          <h3>🛒 Total Orders</h3>
+          <div class="value" id="orderCount">—</div>
+        </div>
+      </div>
+
+      <iframe src="https://docs.google.com/spreadsheets/d/100c4A5elAI7MQrOafISaRqZqwcL4yO0uM1fudO9kCKw/htmlembed"></iframe>
+    </section>
+
+  </div>
+
+  <script>
+    const PASSWORD = "alpha123"; // change this
+    document.getElementById('loginBtn').onclick = () => {
+      const pass = document.getElementById('adminPass').value.trim();
+      if(pass === PASSWORD){
+        document.getElementById('loginBox').classList.add('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        updateVisitorCount(); updateOrderCount();
+      } else { alert("❌ Wrong password"); }
+    };
+
+    function updateVisitorCount(){
+      let c = Number(localStorage.getItem('visitorCount')||0);
+      c++; localStorage.setItem('visitorCount',c);
+      document.getElementById('visitorCount').textContent = c;
+    }
+
+    async function updateOrderCount(){
+      const sheetId="100c4A5elAI7MQrOafISaRqZqwcL4yO0uM1fudO9kCKw";
+      const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+      try{
+        const res=await fetch(url); const csv=await res.text();
+        const rows=csv.split(/\r?\n/).filter(l=>l.trim().length>0);
+        document.getElementById('orderCount').textContent = rows.length-1;
+      }catch(e){document.getElementById('orderCount').textContent="⚠";}
+    }
+
+    /* === Solar System Background === */
+    (function(){
+      const c=document.getElementById('space'),ctx=c.getContext('2d');let w,h,stars=[];
+      function resize(){w=c.width=innerWidth;h=c.height=innerHeight;}resize();onresize=resize;
+      stars=Array.from({length:180},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+0.3,s:Math.random()*0.015+0.005,t:Math.random()*6.28}));
+      const planets=[{r:18,o:80,s:0.02},{r:24,o:140,s:0.012},{r:16,o:200,s:0.016},{r:32,o:260,s:0.009}];let t=0;
+      function draw(){
+        ctx.fillStyle="#000";ctx.fillRect(0,0,w,h);
+        stars.forEach(s=>{s.t+=s.s;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,6.28);ctx.fillStyle=`rgba(255,255,255,${0.5+0.5*Math.sin(s.t)})`;ctx.fill();});
+        const cx=w/2,cy=h/2;
+        ctx.fillStyle="yellow";ctx.beginPath();ctx.arc(cx,cy,20,0,6.28);ctx.fill();
+        t+=1;
+        planets.forEach((p,i)=>{const a=t*p.s+i;const x=cx+Math.cos(a)*p.o,y=cy+Math.sin(a)*p.o;
+          ctx.fillStyle="rgba(100,150,255,0.8)";ctx.beginPath();ctx.arc(x,y,p.r,0,6.28);ctx.fill();});
+        requestAnimationFrame(draw);
+      }draw();
+    })();
+  </script>
+</body>
+</html>
