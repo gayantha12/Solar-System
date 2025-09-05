@@ -1,15 +1,16 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin | Orders Dashboard — Alpha Electricals</title>
+  <title>Admin | Orders & Error Dashboard — Alpha Electricals</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root{
       --brand-dark:#003366;
       --brand-accent:#a300cc;
       --brand-gold:#ffcc00;
+      --error-red:#e74c3c;
       --card-bg: rgba(255,255,255,0.88);
     }
     *{box-sizing:border-box}
@@ -41,7 +42,7 @@
       padding:30px;
     }
     .panel, .login {
-      width:min(950px, 94vw);
+      width:min(1200px, 94vw);
       background: var(--card-bg);
       border-radius:20px;
       box-shadow: 0 24px 60px rgba(0,0,0,0.45);
@@ -92,10 +93,41 @@
       color:#fff; box-shadow:0 8px 22px rgba(0,0,0,.25);
       display:flex; flex-direction:column; align-items:center;
     }
+    .card.error-card {
+      background: linear-gradient(135deg, var(--error-red), #ff6b6b);
+    }
     .card h3{margin:0; font-size:1rem; font-weight:600}
     .card .value{margin-top:6px; font-weight:700; font-size:1.5rem}
 
-    /* Orders iframe */
+    /* Dashboard sections */
+    .dashboard-sections {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .section-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #f0f0f0;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .section-btn.active {
+      background: linear-gradient(135deg, var(--brand-gold), var(--brand-accent));
+      color: white;
+    }
+    
+    /* Content sections */
+    .content-section {
+      display: none;
+    }
+    .content-section.active {
+      display: block;
+    }
+    
+    /* Iframes */
     iframe{
       width:100%; height:480px;
       border:none; border-radius:14px;
@@ -163,7 +195,7 @@
         <div class="title">Alpha Electricals</div>
       </div>
       <div class="admin-name">👨‍💼 Admin: Sujith Shantha Ranasingha</div>
-      <h1 class="dash-title">📊 Orders Dashboard</h1>
+      <h1 class="dash-title">📊 Dashboard</h1>
 
       <div class="stats">
         <div class="card">
@@ -174,9 +206,28 @@
           <h3>🛒 Total Orders</h3>
           <div class="value" id="orderCount">—</div>
         </div>
+        <div class="card error-card">
+          <h3>⚠️ Error Reports</h3>
+          <div class="value" id="errorCount">—</div>
+        </div>
+        <div class="card error-card">
+          <h3>🔴 Critical Errors</h3>
+          <div class="value" id="criticalCount">—</div>
+        </div>
       </div>
-
-      <iframe src="https://docs.google.com/spreadsheets/d/100c4A5elAI7MQrOafISaRqZqwcL4yO0uM1fudO9kCKw/htmlembed"></iframe>
+      
+      <div class="dashboard-sections">
+        <button class="section-btn active" data-section="orders">Orders</button>
+        <button class="section-btn" data-section="errors">Error Reports</button>
+      </div>
+      
+      <div class="content-section active" id="orders-section">
+        <iframe src="https://docs.google.com/spreadsheets/d/100c4A5elAI7MQrOafISaRqZqwcL4yO0uM1fudO9kCKw/htmlembed"></iframe>
+      </div>
+      
+      <div class="content-section" id="errors-section">
+        <iframe src="https://docs.google.com/spreadsheets/d/1L9T98c19HvRukmRXD7I9WnzpcpSh_zTJFygj3q6NtYQ/htmlembed"></iframe>
+      </div>
     </section>
 
   </div>
@@ -188,9 +239,27 @@
       if(pass === PASSWORD){
         document.getElementById('loginBox').classList.add('hidden');
         document.getElementById('adminPanel').classList.remove('hidden');
-        updateVisitorCount(); updateOrderCount();
+        updateVisitorCount(); 
+        updateOrderCount();
+        updateErrorCount();
       } else { alert("❌ Wrong password"); }
     };
+
+    // Section switching
+    document.querySelectorAll('.section-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Update button states
+        document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Show the correct section
+        const sectionId = btn.dataset.section + '-section';
+        document.querySelectorAll('.content-section').forEach(section => {
+          section.classList.remove('active');
+        });
+        document.getElementById(sectionId).classList.add('active');
+      });
+    });
 
     function updateVisitorCount(){
       let c = Number(localStorage.getItem('visitorCount')||0);
@@ -206,6 +275,33 @@
         const rows=csv.split(/\r?\n/).filter(l=>l.trim().length>0);
         document.getElementById('orderCount').textContent = rows.length-1;
       }catch(e){document.getElementById('orderCount').textContent="⚠";}
+    }
+    
+    async function updateErrorCount(){
+      const sheetId="1L9T98c19HvRukmRXD7I9WnzpcpSh_zTJFygj3q6NtYQ";
+      const url=`https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv`;
+      try{
+        const res=await fetch(url); 
+        const csv=await res.text();
+        const rows=csv.split(/\r?\n/).filter(l=>l.trim().length>0);
+        
+        // Count total errors
+        document.getElementById('errorCount').textContent = rows.length-1;
+        
+        // Count critical errors (assuming severity is in column 5)
+        let criticalCount = 0;
+        for(let i = 1; i < rows.length; i++) {
+          const columns = rows[i].split(',');
+          if(columns.length > 4 && columns[4].includes('Critical')) {
+            criticalCount++;
+          }
+        }
+        document.getElementById('criticalCount').textContent = criticalCount;
+        
+      }catch(e){
+        document.getElementById('errorCount').textContent="⚠";
+        document.getElementById('criticalCount').textContent="⚠";
+      }
     }
 
     /* === Solar System Background === */
