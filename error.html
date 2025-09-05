@@ -1,0 +1,279 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar Panel System Error Reporting</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #f57c00;
+            --light-bg: #f8f9fa;
+            --dark-text: #202124;
+            --light-text: #ffffff;
+            --error: #d93025;
+            --success: #0f9d58;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            color: var(--dark-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        header p {
+            color: #5f6368;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+        
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            display: block;
+            width: 100%;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .required::after {
+            content: " *";
+            color: var(--error);
+        }
+        
+        .status-message {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+        
+        .success {
+            background-color: #e6f4ea;
+            color: var(--success);
+            border: 1px solid var(--success);
+            display: block;
+        }
+        
+        .error {
+            background-color: #fce8e6;
+            color: var(--error);
+            border: 1px solid var(--error);
+            display: block;
+        }
+        
+        .solar-icon {
+            font-size: 48px;
+            color: var(--secondary);
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="solar-icon">☀️</div>
+            <h1>Solar Panel System Error Reporting</h1>
+            <p>Report any issues with your solar energy system</p>
+        </header>
+        
+        <div id="statusMessage" class="status-message"></div>
+        
+        <form id="errorForm">
+            <div class="form-group">
+                <label for="timestamp" class="required">Date and Time</label>
+                <input type="datetime-local" id="timestamp" name="timestamp" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="systemId" class="required">System ID</label>
+                <input type="text" id="systemId" name="systemId" placeholder="Enter your system ID" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="errorType" class="required">Error Type</label>
+                <select id="errorType" name="errorType" required>
+                    <option value="">Select error type</option>
+                    <option value="Inverter Failure">Inverter Failure</option>
+                    <option value="Panel Malfunction">Panel Malfunction</option>
+                    <option value="Battery Issue">Battery Issue</option>
+                    <option value="Monitoring System">Monitoring System Error</option>
+                    <option value="Connection Problem">Connection Problem</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="errorDescription" class="required">Error Description</label>
+                <textarea id="errorDescription" name="errorDescription" placeholder="Please describe the error in detail..." required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="severity" class="required">Severity Level</label>
+                <select id="severity" name="severity" required>
+                    <option value="">Select severity level</option>
+                    <option value="Low">Low - Minor issue</option>
+                    <option value="Medium">Medium - System performance affected</option>
+                    <option value="High">High - System not functioning</option>
+                    <option value="Critical">Critical - Safety issue</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="reporterName">Reporter Name (Optional)</label>
+                <input type="text" id="reporterName" name="reporterName" placeholder="Your name">
+            </div>
+            
+            <div class="form-group">
+                <label for="contactInfo">Contact Information (Optional)</label>
+                <input type="text" id="contactInfo" name="contactInfo" placeholder="Email or phone number">
+            </div>
+            
+            <button type="submit">Submit Error Report</button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current date and time as default
+            const now = new Date();
+            // Format to YYYY-MM-DDTHH:MM for datetime-local input
+            const formattedNow = now.toISOString().slice(0, 16);
+            document.getElementById('timestamp').value = formattedNow;
+            
+            // Handle form submission
+            const form = document.getElementById('errorForm');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Basic validation
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+                
+                // Show loading state
+                const submitButton = form.querySelector('button[type="submit"]');
+                submitButton.disabled = true;
+                submitButton.textContent = 'Submitting...';
+                
+                // Collect form data
+                const formData = new FormData(form);
+                const data = {};
+                for (const [key, value] of formData.entries()) {
+                    data[key] = value;
+                }
+                
+                // Send data to Google Sheets
+                fetch('https://script.google.com/macros/s/AKfycbyUxtzaTxbGI3f0MRFh5ctAM9u2NCivQAqotSWfmDqdmSKGhto7HKJ9Nb0bSJof3Gbj8g/exec', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(() => {
+                    // Show success message
+                    statusMessage.textContent = 'Error report submitted successfully!';
+                    statusMessage.className = 'status-message success';
+                    
+                    // Reset form
+                    form.reset();
+                    document.getElementById('timestamp').value = formattedNow;
+                })
+                .catch(error => {
+                    // Show error message
+                    statusMessage.textContent = 'There was an error submitting your report. Please try again.';
+                    statusMessage.className = 'status-message error';
+                    console.error('Error:', error);
+                })
+                .finally(() => {
+                    // Reset button state
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Submit Error Report';
+                    
+                    // Hide status message after 5 seconds
+                    setTimeout(() => {
+                        statusMessage.style.display = 'none';
+                    }, 5000);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
